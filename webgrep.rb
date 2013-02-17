@@ -3,10 +3,10 @@ require 'open-uri'
 require 'nokogiri'
 
 class Webgrep
-    attr_accessor :doc, :base_url
+    attr_accessor :doc, :base_url, :target
     
     def initialize(reg_target, url, depth)
-        @target = reg_target
+        @target = Regexp.new reg_target
         @base_url = url
         @visited = []
         @next_visit = []
@@ -58,14 +58,26 @@ class Webgrep
     end 
     
     
-    def search
+    def write_to(file_name)
         text = @doc.xpath("//text()")
-        x = File.open("file.txt",'w')
-        text.each {|z| x.puts z}
-        x.close
+        file = File.open(file_name,'w')
+        text.each {|i| file.puts i}
+        file.close
     end
     
     
+    def search()
+        text = @doc.xpath("//text()")
+        text.each {|x|
+            puts @target.match(x.content)
+            if @target.match(x.content) != nil
+                return true
+            end
+        }
+        return nil
+    end
+    
+        
     def tester
         raw = @doc.css("a")
         processed = []
