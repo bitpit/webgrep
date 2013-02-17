@@ -5,6 +5,7 @@ require 'nokogiri'
 class Webgrep
     attr_accessor :doc, :base_url, :target
     
+    
     def initialize(reg_target, url, depth)
         @target = Regexp.new reg_target
         @base_url = url
@@ -20,14 +21,9 @@ class Webgrep
     
     def links() #returns all the links off the page minus the ones already visited and the current page (obviously!)
         
-        if @base_url[0,3].downcase == "htt" #gets the current "page.html"
-            base_terminal = @base_url[6..@base_url.length].split(/\//)
-        else
-            base_terminal = @base_url[6..@base_url.length].split(/\//)
-        end
-        base_terminal = base_terminal.drop(base_terminal.length-1)
         base_url = @base_url.split(/\//)
-        base_decoded = "http://"
+        base_terminal = base_url[base_url.length-1]
+        base_decoded = base_url[0]+"//"
         (2..base_url.length-2).each {|j|
             base_decoded << base_url[j]
             base_decoded << "/"
@@ -43,7 +39,9 @@ class Webgrep
             end}
         
         
-        processed -= base_terminal
+        processed.delete(@base_url[0,@base_url.length-1])
+        processed.delete("https"+@base_url[4,@base_url.length])
+                        
         processed = processed.uniq()
         processed.each {|i|
             if i[0,3] != "htt"
@@ -51,6 +49,7 @@ class Webgrep
             end
         }
         processed -= @visited
+                
         if (processed.uniq != nil)
             return processed.uniq
         else return processed
