@@ -13,3 +13,4 @@ bin-release/
 *.pdf
 .DS_Store
 .DS_Store?
+*.txt
