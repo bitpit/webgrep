@@ -1,21 +1,22 @@
 #!/usr/bin/env ruby
 require 'open-uri'
+require 'rubygems'
 require 'nokogiri'
 
 class Webgrep
     attr_accessor :doc, :base_url, :target
     
     
-    def initialize(reg_target, url, depth)
-        @target = Regexp.new reg_target
+    def initialize(reg_target, url, depth, visitede)
+        if reg_target.class == String
+            @target = Regexp.new reg_target
+        else
+            @target = reg_target
+        end
         @base_url = url
-        @visited = []
-        @next_visit = []
-        @depth = depth
+        @visited = visitede
+        @depth = depth.to_i
         @doc = Nokogiri::HTML(open(url))
-        @depth_track = 0
-        @contains_query = []
-        
     end
     
     
@@ -49,10 +50,11 @@ class Webgrep
             end
         }
         processed -= @visited
-                
+        
         if (processed.uniq != nil)
             return processed.uniq
-        else return processed
+        else 
+            return processed
         end
     end 
     
@@ -68,7 +70,7 @@ class Webgrep
     def search()
         text = @doc.xpath("//text()")
         text.each {|x|
-            puts @target.match(x.content)
+            #puts @target.match(x.content)
             if @target.match(x.content) != nil
                 return true
             end
@@ -76,17 +78,33 @@ class Webgrep
         return nil
     end
     
+    
+    def run
         
-    def tester
-        raw = @doc.css("a")
-        processed = []
-        raw.each {|x| 
-            if x.values[0].length > 3 && x.values[0][0,3] != "jav"
-                processed << x.values[0]
-            end}
-        return processed
+        next_visit = links()
+        next_g = []
+        
+        if @depth > 0
+            next_visit.each {|x|
+                temp = Webgrep.new(@target,@base_url,@depth-1,@visited)
+                next_g << temp
+            }
+            g = []
+            next_g.each{|x| g << x.run}
+            g = g.compact
+            if search()
+                g << @base_url
+            end
+            return g
+                
+        else
+            if search()
+                return @base_url
+            else
+                return nil
+            end
+        end
     end
-
 end
 
 
