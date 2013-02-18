@@ -41,7 +41,8 @@ class Webgrep
         raw.each {|x| 
             if x.values[0].length > 3 && x.values[0][0,3] != "jav" &&
                 (/(\.edu|\.com|\.info|\.org|\.co.uk|\.ru|\.eu|\.net)/).match(x.values[0]) != nil &&
-                (/mailto/).match(x.values[0]) == nil
+                (/(?i:mailto)/).match(x.values[0]) == nil &&
+                (/(?i:\.pdf|\.jpg|\.png|\.bmp|\.js|\.jpeg|\.gif|goto)/).match(x.values[0]) == nil
                 processed << x.values[0]
             end}
         
@@ -85,38 +86,52 @@ class Webgrep
     
     
     def run
-                
+        puts @base_url
         if @doc == nil
             return nil,@visited
         
         elsif @depth > 0
-            g = []
+            matches = []
             if @is_top 
-                puts "checking "+@next_visit.length.to_s+" subpages" 
+                puts "searching "+@next_visit.length.to_s+" subpages" 
             end
             
             (0..@next_visit.length-1).each {|x|
                 if @is_top 
-                    puts "checking subpage "+(x+1).to_s+" of "+@next_visit.length.to_s 
+                    puts "searching subpage "+(x+1).to_s+" of "+@next_visit.length.to_s 
                 end
-                temp = Webgrep.new(@target,@next_visit[x],@depth-1,@visited)
-                xx = temp.run
-                if xx[0] != nil && g.include?(xx[0]) == false
-                    g << xx[0]
+                child = Webgrep.new(@target,@next_visit[x],@depth-1,@visited)
+                child_matches, child_visited = child.run
+                if child_matches != nil
+                    if child_matches.is_a?(Array)
+                        child_matches = child_matches.flatten
+                        (0..child_matches.length-1).each {|i|
+                            child_matches[i] = child_matches[i].strip }
+                        child_matches.each {|x|
+                            if !matches.include?(x)
+                                matches << x
+                            end
+                        }
+                            
+                    else
+                        child_matches = child_matches.strip
+                        matches << child_matches
+                    end
                 end
                 
-                xx[1].each {|x|
+                child_visited            
+                child_visited.each {|x|
                     if x != nil && @visited.include?(x) == false
                         @visited << x
                     end
                 }
             }
 
-            g = g.compact
+            matches = matches.compact
             if search() != nil
-                g << @base_url
+                matches << @base_url
             end
-            return g,@visited
+            return matches,@visited
                 
         else
             if search() != nil
@@ -132,3 +147,4 @@ end
 #g = Webgrep.new
 # args = ("(H|h)elmuth","http://people.cs.umass.edu/~thelmuth/index.html",3)
 #@doc.xpath("//text()") #all text
+#g.init("contact","http://people.cs.umass.edu/~thelmuth/index.html",3)

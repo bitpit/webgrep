@@ -9,7 +9,7 @@ class Test
     attr_accessor :visited, :matched, :target
     
     def initialize(targ)
-        if targ.class != Regexp
+        if !targ.is_a?(Regexp)
             @target = Regexp.new targ
         else
             @target = targ
@@ -86,6 +86,7 @@ class Test
         puts ""+bad_urls.to_s+" bad urls"
         2.times {puts}
         puts "---------------------------------------------------------"
+        puts ""+@matched.length+" matches supposedly"
         puts "Matched"
         (0..@matched.length-1).each {|i|
             begin
