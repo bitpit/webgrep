@@ -83,25 +83,29 @@ class Webgrep
         
         next_visit = links()
         next_g = []
+        @visited << @base_url
         
         if @depth > 0
-            next_visit.each {|x|
-                temp = Webgrep.new(@target,@base_url,@depth-1,@visited)
-                next_g << temp
-            }
             g = []
-            next_g.each{|x| g << x.run}
+            next_visit.each {|x|
+                temp = Webgrep.new(@target,x,@depth-1,@visited)
+                next_g << temp
+                xx = temp.run
+                g << xx[0]
+                @visited << xx[1]
+                @visited = @visited.compact
+            }
             g = g.compact
             if search()
                 g << @base_url
             end
-            return g
+            return g,@visited
                 
         else
             if search()
-                return @base_url
+                return @base_url,@visited
             else
-                return nil
+                return nil,@visited
             end
         end
     end
