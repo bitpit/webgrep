@@ -86,7 +86,7 @@ class Test
         puts ""+bad_urls.to_s+" bad urls"
         2.times {puts}
         puts "---------------------------------------------------------"
-        puts ""+@matched.length+" matches supposedly"
+        puts ""+@matched.length.to_s+" matches supposedly"
         puts "Matched"
         (0..@matched.length-1).each {|i|
             begin

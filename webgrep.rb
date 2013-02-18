@@ -25,38 +25,50 @@ class Webgrep
     end
     
     
-    
     def links() #returns all the links off the page minus the ones already visited and the current page (obviously!)
         
         base_url = @base_url.split(/\//)
         base_terminal = base_url[base_url.length-1]
         base_decoded = base_url[0]+"//"
-        (2..base_url.length-2).each {|j|
+        if base_url.length > 3
+            offset = 2
+        else
+            offset = 1
+        end
+        (2..base_url.length-offset).each {|j|
             base_decoded << base_url[j]
             base_decoded << "/"
         }
-        
         raw = @doc.css("a")
         processed = []
         raw.each {|x| 
-            if x.values[0].length > 3 && x.values[0][0,3] != "jav" &&
-                (/(\.edu|\.com|\.info|\.org|\.co.uk|\.ru|\.eu|\.net)/).match(x.values[0]) != nil &&
+            if (/(\.edu|\.com|\.info|\.org|\.co.uk|\.ru|\.eu|\.net)/).match(x.values[0]) != nil &&
                 (/(?i:mailto)/).match(x.values[0]) == nil &&
                 (/(?i:\.pdf|\.jpg|\.png|\.bmp|\.js|\.jpeg|\.gif|goto)/).match(x.values[0]) == nil
                 processed << x.values[0]
-            end}
-        
-        
+            elsif x.values[0].length > 3 && x.values[0][0,3] != "jav" && (/(?i:mailto)/).match(x.values[0]) == nil &&
+                (/(?i:\.pdf|\.jpg|\.png|\.bmp|\.js|\.jpeg|\.gif|goto)/).match(x.values[0]) == nil
+                if x.values[0][0..0] == "/"
+                    processed << base_decoded+x.values[0][1..x.values[0].length-1]
+                else
+                    processed << base_decoded+x.values[0]
+                end
+            end
+        }
+                
         processed.delete(@base_url[0,@base_url.length-1])
         processed.delete("https"+@base_url[4,@base_url.length])
                         
         processed = processed.uniq()
-        processed.each {|i|
-            if i[0,3] != "htt"
-                i.insert(0,base_decoded)
+        
+        (0..processed.length-1).each {|i|
+            if processed[i][0,3] != "htt"
+                processed[i].insert(0,base_decoded)
+            end
+            if processed.is_a?(String)
+                processed[i] = processed[i].strip
             end
         }
-        processed -= @visited
         
         if (processed.uniq != nil)
             return processed.uniq
