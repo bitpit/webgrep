@@ -5,7 +5,7 @@ require 'nokogiri'
 
 class Webgrep
     attr_accessor :doc, :base_url, :target
-    attr_writer :top
+    attr_writer :is_top
     
     
     def initialize(reg_target, url, depth, visitede)
@@ -18,7 +18,7 @@ class Webgrep
         @visited = visitede
         @depth = depth.to_i
         @visited << @base_url
-        @top = nil
+        @is_top = nil
         
         begin
             @doc = Nokogiri::HTML(open(url))
@@ -95,12 +95,12 @@ class Webgrep
         
         elsif @depth > 0
             g = []
-            if @top 
+            if @is_top 
                 puts "checking "+@next_visit.length.to_s+" subpages" 
             end
             
             (0..@next_visit.length-1).each {|x|
-                if @top 
+                if @is_top 
                     puts "checking subpage "+(x+1).to_s+" of "+@next_visit.length.to_s 
                 end
                 temp = Webgrep.new(@target,@next_visit[x],@depth-1,@visited)
