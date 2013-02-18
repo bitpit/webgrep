@@ -9,14 +9,10 @@ class Webgrep
     
     
     def initialize(reg_target, url, depth, visitede)
-        if reg_target.class == String
-            @target = Regexp.new reg_target
-        else
-            @target = reg_target
-        end
+        @target = reg_target
         @base_url = url
         @visited = visitede
-        @depth = depth.to_i
+        @depth = depth
         @visited << @base_url
         @is_top = nil
         

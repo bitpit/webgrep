@@ -1,37 +1,23 @@
 #!/usr/bin/env ruby
 require 'open-uri'
 require 'webgrep.rb'
+require 'debug_class.rb' ###bug testing line
 
 
 class Grep
         
-    def make
-        if ARGV.size > 3 || ARGV.size < 3 || ARGV.size == 0 then
-            puts "Please run with arguements in this form: "
-            puts "     \"(Re|gex| tar|get)\" http://start_page.com 'depth of pages to search in int'"
-            exit
-        elsif ARGV.size != 0 then
-            @target = ARGV[0]
-            @base_url = ARGV[1]
-            @visited = []
-            @next_visit = []
-            @depth = ARGV[2]
-            @depth_track = 0
-        end
+    def init_t
+        @target = Regexp.new ARGV[0]
+        @base_url = ARGV[1]
+        @depth = ARGV[2].to_i
     end
     
     
-    def testes(to_write)
-        begin
-            file1 = File.open("matched",'w')
-            file2 = File.open("visited",'w')
-            to_write[0].each {|i| file1.puts i}
-            to_write[1].each {|i| file2.puts i}
-            file1.close
-            file2.close
-        rescue Exception
-            puts "something cocked up"
-        end
+    def init(targ,url,depth)
+        @target = Regexp.new targ
+        @base_url = url
+        @depth = depth.to_i
+        return @target,@base_url,@depth
     end
     
     
@@ -39,10 +25,13 @@ class Grep
         top_page = Webgrep.new(@target,@base_url,@depth,[]) #make top page, tell it its top
         top_page.is_top=(true)
         results = top_page.run #recursively looks through pages; returns [matched, visited] sites
-        testes(results)
+        bugger = Test.new(@target) ###bug testing line
+        bugger.write_test(results) ###bug testing line
+        bugger.load_test() ###bug testing line
         results = results[0].compact.uniq #.compact.uniq shouldn't be needed but can't hurt
         results = results.delete_if {|x| x.length < 3}
         print_results(results)
+        return bugger ###bug testing line
     end
     
     
@@ -63,7 +52,8 @@ class Grep
     
 end
 
-
-g = Grep.new
-g.make
-g.run()
+if ARGV.size == 3
+    g = Grep.new
+    g.init_t
+    g.run()
+end

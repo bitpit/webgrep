@@ -9,7 +9,25 @@ class Test
     attr_accessor :visited, :matched, :target
     
     def initialize(targ)
-        @target = Regexp.new targ
+        if targ.class != Regexp
+            @target = Regexp.new targ
+        else
+            @target = targ
+        end
+    end
+    
+    
+    def write_test(to_write)
+        begin
+            file1 = File.open("matched",'w')
+            file2 = File.open("visited",'w')
+            to_write[0].each {|i| file1.puts i}
+            to_write[1].each {|i| file2.puts i}
+            file1.close
+            file2.close
+            rescue Exception
+            puts "something cocked up"
+        end
     end
     
     
