@@ -5,6 +5,7 @@ require 'nokogiri'
 
 class Webgrep
     attr_accessor :doc, :base_url, :target
+    attr_writer :top
     
     
     def initialize(reg_target, url, depth, visitede)
@@ -21,15 +22,12 @@ class Webgrep
         
         begin
             @doc = Nokogiri::HTML(open(url))
+            @next_visit = links()
         rescue Exception
             @doc = nil
         end
     end
     
-    
-    def set_top()
-        @top = true
-    end
     
     
     def links() #returns all the links off the page minus the ones already visited and the current page (obviously!)
@@ -91,19 +89,21 @@ class Webgrep
     
     
     def run
-        
-        if @doc != nil
-            next_visit = links()
-        end
                 
         if @doc == nil
             return nil,@visited
         
         elsif @depth > 0
             g = []
+            if @top 
+                puts "checking "+@next_visit.length.to_s+" subpages" 
+            end
             
-            next_visit.each {|x|
-                temp = Webgrep.new(@target,x,@depth-1,@visited)
+            (0..@next_visit.length-1).each {|x|
+                if @top 
+                    puts "checking subpage "+(x+1).to_s+" of "+@next_visit.length.to_s 
+                end
+                temp = Webgrep.new(@target,@next_visit[x],@depth-1,@visited)
                 xx = temp.run
                 if xx[0] != nil && g.include?(xx[0]) == false
                     g << xx[0]
@@ -115,6 +115,7 @@ class Webgrep
                     end
                 }
             }
+
             g = g.compact
             if search() != nil
                 g << @base_url
