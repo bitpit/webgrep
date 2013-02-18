@@ -16,7 +16,19 @@ class Webgrep
         @base_url = url
         @visited = visitede
         @depth = depth.to_i
-        @doc = Nokogiri::HTML(open(url))
+        @visited << @base_url
+        @top = nil
+        
+        begin
+            @doc = Nokogiri::HTML(open(url))
+        rescue Exception
+            @doc = nil
+        end
+    end
+    
+    
+    def set_top()
+        @top = true
     end
     
     
@@ -70,7 +82,6 @@ class Webgrep
     def search()
         text = @doc.xpath("//text()")
         text.each {|x|
-            #puts @target.match(x.content)
             if @target.match(x.content) != nil
                 return true
             end
@@ -81,28 +92,37 @@ class Webgrep
     
     def run
         
-        next_visit = links()
-        next_g = []
-        @visited << @base_url
+        if @doc != nil
+            next_visit = links()
+        end
+                
+        if @doc == nil
+            return nil,@visited
         
-        if @depth > 0
+        elsif @depth > 0
             g = []
+            
             next_visit.each {|x|
                 temp = Webgrep.new(@target,x,@depth-1,@visited)
-                next_g << temp
                 xx = temp.run
-                g << xx[0]
-                @visited << xx[1]
-                @visited = @visited.compact
+                if xx[0] != nil && g.include?(xx[0]) == false
+                    g << xx[0]
+                end
+                
+                xx[1].each {|x|
+                    if x != nil && @visited.include?(x) == false
+                        @visited << x
+                    end
+                }
             }
             g = g.compact
-            if search()
+            if search() != nil
                 g << @base_url
             end
             return g,@visited
                 
         else
-            if search()
+            if search() != nil
                 return @base_url,@visited
             else
                 return nil,@visited

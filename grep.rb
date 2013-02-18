@@ -26,8 +26,10 @@ class Grep
     
     def run
         f = Webgrep.new(@target,@base_url,@depth,[])
+        f.set_top()
         x = f.run
-        return x.compact
+        x = x[0].compact
+        return x.uniq
     end
     
 end
@@ -35,5 +37,5 @@ end
 
 g = Grep.new
 ex = g.run()
-ex.each {|x| puts x}
-
+#ex.each {|x| puts x}
+puts ex
