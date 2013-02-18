@@ -4,8 +4,7 @@ require 'webgrep.rb'
 
 
 class Grep
-    
-    
+        
     def make
         if ARGV.size > 3 || ARGV.size < 3 || ARGV.size == 0 then
             puts "Please run with arguements in this form: "
@@ -41,7 +40,7 @@ class Grep
         top_page.is_top=(true)
         results = top_page.run #recursively looks through pages; returns [matched, visited] sites
         testes(results)
-        results = results[0].compact.uniq #shouldn't be needed but doesn't hurt
+        results = results[0].compact.uniq #.compact.uniq shouldn't be needed but can't hurt
         results = results.delete_if {|x| x.length < 3}
         print_results(results)
     end
@@ -58,7 +57,9 @@ class Grep
             puts results
         end
     end
-        
+    
+    
+    
     
 end
 
