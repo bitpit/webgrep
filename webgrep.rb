@@ -70,6 +70,8 @@ class Webgrep
             end
         }
         
+        processed.delete_if {|x| x.include? " "}
+        
         if (processed.uniq != nil)
             return processed.uniq
         else 

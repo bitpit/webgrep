@@ -14,3 +14,4 @@ bin-release/
 .DS_Store
 .DS_Store?
 *.txt
+testy.rb
