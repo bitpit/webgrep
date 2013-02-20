@@ -1,10 +1,11 @@
 #!/usr/bin/env ruby
 require 'open-uri'
 require 'webgrep.rb'
-require 'debug_class.rb' ###bug testing line
+#require 'debug_class.rb' ###bug testing line
 
 
 class Grep
+    attr_accessor :target, :matched, :visited
         
     def init_t
         @target = Regexp.new ARGV[0]
@@ -25,13 +26,10 @@ class Grep
         top_page = Webgrep.new(@target,@base_url,@depth,[]) #make top page, tell it its top
         top_page.is_top=(true)
         results = top_page.run #recursively looks through pages; returns [matched, visited] sites
-        bugger = Test.new(@target) ###bug testing line
-        bugger.write_test(results) ###bug testing line
-        bugger.load_test() ###bug testing line
+        @matched, @visited = results
         results = results[0]#.compact.uniq #.compact.uniq shouldn't be needed but can't hurt
         results = results.delete_if {|x| x.length < 3}
         print_results(results)
-        return bugger ###bug testing line
     end
     
     

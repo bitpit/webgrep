@@ -42,75 +42,73 @@ class Webgrep
     end
     
     
-    def run            
-        begin
-            @next_visit = links()
-            @visited.concat(@next_visit)
-            @visited = @visited.flatten
-        rescue Exception
-            #yep
+    def run_valid_url_children(ls)
+        if @is_top 
+            puts "searching "+ls.length.to_s+" subpages" 
         end
         
-        puts ""+@page_url.inspect+"   @depth "+@depth.inspect
+        to_visit = ls
+        @visited.concat(to_visit)
+        @visited = @visited.uniq
+        
+        search_matches = []
+        
+        to_visit.each_index {|i|
+            if @is_top 
+                puts "searching "+to_visit.length.to_s+" subpages" 
+            end
+            
+            child = Webgrep.new(@regex_target,to_visit[i],@depth-1,@visited)
+            child_matches, child_visited = child.run
+            
+            if !child_matches.is_a?(NilClass)
+                child_matches = child_matches.to_a.flatten
+                child_matches.each_index {|j|
+                    temp = child_matches[j].strip
+                    if !search_matches.include?(temp) && !temp.is_a?(NilClass)
+                        search_matches << temp
+                    end
+                }
+            end
+            
+            child_visited.flatten.each {|o|
+                if o != nil && !@visited.include?(o)
+                    @visited << o
+                end
+            }
+            
+        }
+        if search() && !search_matches.include?(@page_url)
+            search_matches << @page_url
+        end
+        
+        return search_matches,@visited
+    end
+    
+    
+    def run_valid_url_childless()
+        if search()
+            return @page_url,@visited
+        else
+            return nil,@visited
+        end
+    end
+        
+    
+    def run 
         
         if @doc.is_a?(NilClass)
             return nil,@visited
+        end
         
-        elsif @depth > 0
-            matches = []
-            if @is_top 
-                puts "searching "+@next_visit.length.to_s+" subpages" 
-            end
             
-            (0..@next_visit.length-1).each {|x|
-                if @is_top 
-                    puts "searching subpage "+(x+1).to_s+" of "+@next_visit.length.to_s 
-                end
-                child = Webgrep.new(@regex_target,@next_visit[x],@depth-1,@visited)
-                child_matches, child_visited = child.run
-                if !child_matches.is_a?(NilClass)
-                    if child_matches.is_a?(Array)
-                        child_matches = child_matches.flatten
-                        (0..child_matches.length-1).each {|i|
-                            child_matches[i] = child_matches[i].strip }
-                        child_matches.each {|x|
-                            if !matches.include?(x)
-                                matches << x
-                            end
-                        }
-                            
-                    else
-                        child_matches = child_matches.strip
-                        if !matches.include?(child_matches)
-                            matches << child_matches
-                        end
-                    end
-                end
-                
-                child_visited = child_visited.flatten
-                         
-                child_visited.each {|x|
-                    if x != nil && !@visited.include?(x)
-                        @visited << x
-                    end
-                }          
-            }
-
-            matches = matches.compact
-            if search() != nil
-                matches << @page_url
-            end
-            return matches,@visited
-                
+        if @depth > 0
+            return run_valid_url_children(links())
         else
-            if search() != nil
-                return @page_url,@visited
-            else
-                return nil,@visited
-            end
+            return run_valid_url_childless
         end
     end
-    
+
     
     def links() #returns all the links off the page minus the ones already visited and the current page (obviously!)
         
@@ -146,15 +144,15 @@ class Webgrep
     
     def links_process(css_format,url_last_stripped)
         
-        allowed_reg = Regexp.new "(\.edu|\.com|\.info|\.org|\.co.uk|\.ru|\.eu|\.net|\.gov|\.biz)"
-        disallowed_reg = Regexp.new "(?i:mailto|\.pdf|\.jpg|\.png|\.bmp|\.js|\.jpeg|\.gif|goto)"
+        allowed_reg = Regexp.new "(\\.edu|\\.com|\\.info|\\.org|\\.co.uk|\\.ru|\\.eu|\\.net|\\.gov|\\.biz)"
+        disallowed_reg = Regexp.new "(?i:mailto|\\.pdf|\\.jpg|\\.png|\\.bmp|\\.js|\\.jpeg|\\.gif|goto)"
         processed_links = []
         
         css_format.each {|css_link|
             link_value = css_link.values[0]
             if allowed_reg.match(link_value) && !disallowed_reg.match(link_value)
                 processed_links << link_value
-                elsif link_value.length > 3 && link_value[0,4] != "java" && !disallowed_reg.match(link_value)
+            elsif link_value.length > 3 && link_value[0,4] != "java" && !disallowed_reg.match(link_value)
                 if link_value[0..0] == "/"
                     processed_links << url_last_stripped.chop+link_value
                     else
@@ -175,4 +173,4 @@ end
 #g = Webgrep.new
 # args = ("(H|h)elmuth","http://people.cs.umass.edu/~thelmuth/index.html",3)
 #@doc.xpath("//text()") #all text
-#g.init("[Cc]ontact","http://people.cs.umass.edu/~thelmuth/index.html",2)
+#g.init("[Cc]ontact [Uu]s","http://people.cs.umass.edu/~thelmuth/index.html",2)

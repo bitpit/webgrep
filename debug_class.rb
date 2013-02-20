@@ -43,13 +43,6 @@ class Test
             while (line = file2.gets)
                 matched << line
             end
-=begin            puts visited
-            puts "visited"
-            5.times {puts}
-            puts matched
-            puts "matched"
-            5.times {puts}
-=end
             (0..@visited.length-1).each {|x| @visited[x] = @visited[x].strip}
             (0..@matched.length-1).each {|x| @matched[x] = @matched[x].strip}
         rescue Exception
