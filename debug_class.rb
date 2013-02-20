@@ -17,10 +17,10 @@ class Test
     end
     
     
-    def write_test(to_write)
-        begin
-            file1 = File.open("matched",'w')
-            file2 = File.open("visited",'w')
+    def write_test(to_write,v="visited",m="matched")
+        begxin
+            file1 = File.open(v,'w')
+            file2 = File.open(m,'w')
             to_write[0].each {|i| file1.puts i}
             to_write[1].each {|i| file2.puts i}
             file1.close
@@ -31,12 +31,12 @@ class Test
     end
     
     
-    def load_test()
+    def load_test(v="visited",m="matched")
         begin
             @visited = []
             @matched = []
-            file1 = File.open("visited",'r')
-            file2 = File.open("matched",'r')
+            file1 = File.open(v,'r')
+            file2 = File.open(m,'r')
             while (line = file1.gets)
                 visited << line
             end
