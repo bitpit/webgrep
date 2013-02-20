@@ -19,6 +19,8 @@ class Webgrep
         begin
             @doc = Nokogiri::HTML(open(url))
             @next_visit = links()
+            @visited << @next_visit
+            @visited = @visited.flatten
         rescue Exception
             @doc = nil
         end
@@ -60,7 +62,7 @@ class Webgrep
         processed.delete("https"+@base_url[4,@base_url.length])
                         
         processed = processed.uniq()
-        
+                
         (0..processed.length-1).each {|i|
             if processed[i][0,3] != "htt"
                 processed[i].insert(0,base_decoded)
@@ -71,6 +73,7 @@ class Webgrep
         }
         
         processed.delete_if {|x| x.include? " "}
+        processed -= @visited
         
         if (processed.uniq != nil)
             return processed.uniq
@@ -100,7 +103,7 @@ class Webgrep
     
     
     def run
-        puts @base_url
+        #puts @base_url
         if @doc == nil
             return nil,@visited
         
@@ -133,12 +136,13 @@ class Webgrep
                     end
                 end
                 
-                child_visited            
+                child_visited = child_visited.flatten
+                         
                 child_visited.each {|x|
                     if x != nil && @visited.include?(x) == false
                         @visited << x
                     end
-                }
+                }          
             }
 
             matches = matches.compact
@@ -161,4 +165,4 @@ end
 #g = Webgrep.new
 # args = ("(H|h)elmuth","http://people.cs.umass.edu/~thelmuth/index.html",3)
 #@doc.xpath("//text()") #all text
-#g.init("contact","http://people.cs.umass.edu/~thelmuth/index.html",3)
+#g.init("[Cc]ontact","http://people.cs.umass.edu/~thelmuth/index.html",2)

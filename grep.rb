@@ -28,7 +28,7 @@ class Grep
         bugger = Test.new(@target) ###bug testing line
         bugger.write_test(results) ###bug testing line
         bugger.load_test() ###bug testing line
-        results = results[0].compact.uniq #.compact.uniq shouldn't be needed but can't hurt
+        results = results[0]#.compact.uniq #.compact.uniq shouldn't be needed but can't hurt
         results = results.delete_if {|x| x.length < 3}
         print_results(results)
         return bugger ###bug testing line
