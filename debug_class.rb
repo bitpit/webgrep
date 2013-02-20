@@ -18,7 +18,7 @@ class Test
     
     
     def write_test(to_write,v="visited",m="matched")
-        begxin
+        begin
             file1 = File.open(v,'w')
             file2 = File.open(m,'w')
             to_write[0].each {|i| file1.puts i}
