@@ -4,84 +4,24 @@ require 'rubygems'
 require 'nokogiri'
 
 class Webgrep
-    attr_accessor :doc, :base_url, :target
+    attr_accessor :doc, :page_url, :regex_target
     attr_writer :is_top
     
     
-    def initialize(reg_target, url, depth, visitede)
-        @target = reg_target
-        @base_url = url
-        @visited = visitede
+    def initialize(regex_target, url, depth, visited=[], top_status=nil)
+        @regex_target = regex_target
+        @page_url = url
+        @visited = visited << @page_url
         @depth = depth
-        @visited << @base_url
-        @is_top = nil
+        @is_top = top_status
         
         begin
             @doc = Nokogiri::HTML(open(url))
-            @next_visit = links()
-            @visited << @next_visit
-            @visited = @visited.flatten
         rescue Exception
             @doc = nil
         end
     end
-    
-    
-    def links() #returns all the links off the page minus the ones already visited and the current page (obviously!)
-        
-        base_url = @base_url.split(/\//)
-        base_terminal = base_url[base_url.length-1]
-        base_decoded = base_url[0]+"//"
-        if base_url.length > 3
-            offset = 2
-        else
-            offset = 1
-        end
-        (2..base_url.length-offset).each {|j|
-            base_decoded << base_url[j]
-            base_decoded << "/"
-        }
-        raw = @doc.css("a")
-        processed = []
-        raw.each {|x| 
-            if (/(\.edu|\.com|\.info|\.org|\.co.uk|\.ru|\.eu|\.net)/).match(x.values[0]) != nil &&
-                (/(?i:mailto)/).match(x.values[0]) == nil &&
-                (/(?i:\.pdf|\.jpg|\.png|\.bmp|\.js|\.jpeg|\.gif|goto)/).match(x.values[0]) == nil
-                processed << x.values[0]
-            elsif x.values[0].length > 3 && x.values[0][0,3] != "jav" && (/(?i:mailto)/).match(x.values[0]) == nil &&
-                (/(?i:\.pdf|\.jpg|\.png|\.bmp|\.js|\.jpeg|\.gif|goto)/).match(x.values[0]) == nil
-                if x.values[0][0..0] == "/"
-                    processed << base_decoded+x.values[0][1..x.values[0].length-1]
-                else
-                    processed << base_decoded+x.values[0]
-                end
-            end
-        }
-                
-        processed.delete(@base_url[0,@base_url.length-1])
-        processed.delete("https"+@base_url[4,@base_url.length])
-                        
-        processed = processed.uniq()
-                
-        (0..processed.length-1).each {|i|
-            if processed[i][0,3] != "htt"
-                processed[i].insert(0,base_decoded)
-            end
-            if processed.is_a?(String)
-                processed[i] = processed[i].strip
-            end
-        }
-        
-        processed.delete_if {|x| x.include? " "}
-        processed -= @visited
-        
-        if (processed.uniq != nil)
-            return processed.uniq
-        else 
-            return processed
-        end
-    end 
-    
+
     
     def write_to(file_name)
         text = @doc.xpath("//text()")
@@ -94,7 +34,7 @@ class Webgrep
     def search()
         text = @doc.xpath("//text()")
         text.each {|x|
-            if @target.match(x.content) != nil
+            if @regex_target.match(x.content) != nil
                 return true
             end
         }
@@ -102,9 +42,18 @@ class Webgrep
     end
     
     
-    def run
-        #puts @base_url
-        if @doc == nil
+    def run            
+        begin
+            @next_visit = links()
+            @visited.concat(@next_visit)
+            @visited = @visited.flatten
+        rescue Exception
+            #yep
+        end
+        
+        puts ""+@page_url.inspect+"   @depth "+@depth.inspect
+        
+        if @doc.is_a?(NilClass)
             return nil,@visited
         
         elsif @depth > 0
@@ -117,9 +66,9 @@ class Webgrep
                 if @is_top 
                     puts "searching subpage "+(x+1).to_s+" of "+@next_visit.length.to_s 
                 end
-                child = Webgrep.new(@target,@next_visit[x],@depth-1,@visited)
+                child = Webgrep.new(@regex_target,@next_visit[x],@depth-1,@visited)
                 child_matches, child_visited = child.run
-                if child_matches != nil
+                if !child_matches.is_a?(NilClass)
                     if child_matches.is_a?(Array)
                         child_matches = child_matches.flatten
                         (0..child_matches.length-1).each {|i|
@@ -132,14 +81,16 @@ class Webgrep
                             
                     else
                         child_matches = child_matches.strip
-                        matches << child_matches
+                        if !matches.include?(child_matches)
+                            matches << child_matches
+                        end
                     end
                 end
                 
                 child_visited = child_visited.flatten
                          
                 child_visited.each {|x|
-                    if x != nil && @visited.include?(x) == false
+                    if x != nil && !@visited.include?(x)
                         @visited << x
                     end
                 }          
@@ -147,17 +98,76 @@ class Webgrep
 
             matches = matches.compact
             if search() != nil
-                matches << @base_url
+                matches << @page_url
             end
             return matches,@visited
                 
         else
             if search() != nil
-                return @base_url,@visited
+                return @page_url,@visited
             else
                 return nil,@visited
             end
         end
+    end
+    
+    
+    def links() #returns all the links off the page minus the ones already visited and the current page (obviously!)
+        
+        url_last_stripped = links_strip_last(@page_url)
+        css_format_links = @doc.css("a")
+        processed_links = links_process(css_format_links,url_last_stripped)
+        processed_links -= @visited
+        return processed_links #this should always be an array of links to visit in String format
+    end
+    
+    
+    def links_strip_last(url)
+        
+        split_url = url.split(/\//)
+        
+        if split_url.length > 3
+            built_up = split_url[0]+"//"
+            terminal = split_url.last
+            (2..split_url.length-2).each {|j|
+                built_up << split_url[j]
+                built_up << "/" }
+            return built_up
+            
+            else
+            if url[url.length-1..url.length-1] != "/"
+                return url+"/"
+                else
+                return url
+            end
+        end
+    end
+    
+    
+    def links_process(css_format,url_last_stripped)
+        
+        allowed_reg = Regexp.new "(\.edu|\.com|\.info|\.org|\.co.uk|\.ru|\.eu|\.net|\.gov|\.biz)"
+        disallowed_reg = Regexp.new "(?i:mailto|\.pdf|\.jpg|\.png|\.bmp|\.js|\.jpeg|\.gif|goto)"
+        processed_links = []
+        
+        css_format.each {|css_link|
+            link_value = css_link.values[0]
+            if allowed_reg.match(link_value) && !disallowed_reg.match(link_value)
+                processed_links << link_value
+                elsif link_value.length > 3 && link_value[0,4] != "java" && !disallowed_reg.match(link_value)
+                if link_value[0..0] == "/"
+                    processed_links << url_last_stripped.chop+link_value
+                    else
+                    processed_links << url_last_stripped+link_value
+                end
+            end
+        }
+        
+        processed_links = processed_links.uniq.flatten
+        processed_links.each_index {|i|
+            processed_links[i] = processed_links[i].strip }
+        processed_links.delete_if {|x| x.include? " "}
+        return processed_links
     end
 end
 
