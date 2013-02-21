@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 require 'open-uri'
-require 'childgrep.rb'
-#require 'debug_class.rb' ###bug testing line
+require 'child-grep.rb'
 
 
 class Grep
