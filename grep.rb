@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 require 'open-uri'
-require 'webgrep.rb'
+require 'childgrep.rb'
 #require 'debug_class.rb' ###bug testing line
 
 
@@ -23,7 +23,7 @@ class Grep
     
     
     def run
-        top_page = Webgrep.new(@target,@base_url,@depth,[]) #make top page, tell it its top
+        top_page = Childgrep.new(@target,@base_url,@depth,[]) #make top page, tell it its top
         top_page.is_top=(true)
         results = top_page.run #recursively looks through pages; returns [matched, visited] sites
         @matched, @visited = results

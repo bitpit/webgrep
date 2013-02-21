@@ -4,12 +4,11 @@ require 'rubygems'
 require 'nokogiri'
 
 class Webgrep
-    attr_accessor :doc, :page_url, :regex_target
-    attr_writer :is_top
+    attr_accessor :doc, :page_url, :regex_target, :is_top
+        
     
-    
-    def initialize(regex_target, url, depth, visited=[], top_status=nil)
-        @regex_target = regex_target
+    def initialize(regex_search_target, url, depth, visited=[], top_status=nil)
+        @regex_target = regex_search_target
         @page_url = url
         @visited = visited << @page_url
         @depth = depth
@@ -21,103 +20,46 @@ class Webgrep
             @doc = nil
         end
     end
-
-    
-    def write_to(file_name)
-        text = @doc.xpath("//text()")
-        file = File.open(file_name,'w')
-        text.each {|i| file.puts i}
-        file.close
-    end
     
     
     def search()
-        text = @doc.xpath("//text()")
-        text.each {|x|
-            if @regex_target.match(x.content) != nil
-                return true
-            end
-        }
-        return nil
-    end
-    
-    
-    def run_valid_url_children(ls)
-        if @is_top 
-            puts "searching "+ls.length.to_s+" subpages" 
-        end
-        
-        to_visit = ls
-        @visited.concat(to_visit)
-        @visited = @visited.uniq
-        
-        search_matches = []
-        
-        to_visit.each_index {|i|
-            if @is_top 
-                puts "searching "+to_visit.length.to_s+" subpages" 
-            end
-            
-            child = Webgrep.new(@regex_target,to_visit[i],@depth-1,@visited)
-            child_matches, child_visited = child.run
-            
-            if !child_matches.is_a?(NilClass)
-                child_matches = child_matches.to_a.flatten
-                child_matches.each_index {|j|
-                    temp = child_matches[j].strip
-                    if !search_matches.include?(temp) && !temp.is_a?(NilClass)
-                        search_matches << temp
-                    end
-                }
-            end
-            
-            child_visited.flatten.each {|o|
-                if o != nil && !@visited.include?(o)
-                    @visited << o
+        begin
+            text = @doc.xpath("//text()")
+            text.each {|x|
+                if @regex_target.match(x.content) != nil
+                    return true
                 end
             }
-            
-        }
-        if search() && !search_matches.include?(@page_url)
-            search_matches << @page_url
-        end
-        
-        return search_matches,@visited
-    end
-    
-    
-    def run_valid_url_childless()
-        if search()
-            return @page_url,@visited
-        else
-            return nil,@visited
+            return nil
+            rescue NoMethodError
+            puts "tried to search an empty doc"
         end
     end
-        
+
     
     def run 
         
         if @doc.is_a?(NilClass)
             return nil,@visited
-        end
         
-            
-        if @depth > 0
-            return run_valid_url_children(links())
         else
-            return run_valid_url_childless
+            return run_valid_url
         end
     end
 
     
     def links() #returns all the links off the page minus the ones already visited and the current page (obviously!)
         
-        url_last_stripped = links_strip_last(@page_url)
-        css_format_links = @doc.css("a")
-        processed_links = links_process(css_format_links,url_last_stripped)
-        processed_links -= @visited
-        return processed_links #this should always be an array of links to visit in String format
-    end
+        begin
+            css_format_links = @doc.css("a")
+            url_last_stripped = links_strip_last(@page_url)
+            processed_links = links_process(css_format_links,url_last_stripped)
+            processed_links -= @visited
+            return processed_links #this should always be an array of links to visit in String format
+        rescue NoMethodError
+            puts "tried to get links from an empty doc"
+        end
+    end        
     
     
     def links_strip_last(url)
@@ -170,7 +112,4 @@ class Webgrep
 end
 
 
-#g = Webgrep.new
-# args = ("(H|h)elmuth","http://people.cs.umass.edu/~thelmuth/index.html",3)
-#@doc.xpath("//text()") #all text
 #g.init("[Cc]ontact [Uu]s","http://people.cs.umass.edu/~thelmuth/index.html",2)
