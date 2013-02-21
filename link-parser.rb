@@ -1,8 +1,8 @@
 class LinkParser
     
   
-    def parse(url,doc,visited)
-        css_format = doc
+    def parse(url,links,visited)
+        css_format = links
         url_last_stripped = strip_last(url)
         processed_links = process(css_format,url_last_stripped)
         processed_links -= visited
@@ -34,13 +34,13 @@ class LinkParser
     
     def process(css_format,url_last_stripped)
         
-        allowed_reg = Regexp.new "(\\.edu|\\.com|\\.info|\\.org|\\.co.uk|\\.ru|\\.eu|\\.net|\\.gov|\\.biz)"
+        is_full? = Regexp.new "^http"
         disallowed_reg = Regexp.new "(?i:mailto|\\.pdf|\\.jpg|\\.png|\\.bmp|\\.js|\\.jpeg|\\.gif|goto)"
         processed_links = []
         
         css_format.each {|css_link|
             link_value = css_link.values[0]
-            if allowed_reg.match(link_value) && !disallowed_reg.match(link_value)
+            if is_full?.match(link_value) && !disallowed_reg.match(link_value)
                 processed_links << link_value
                 elsif link_value.length > 3 && link_value[0,4] != "java" && !disallowed_reg.match(link_value)
                 if link_value[0..0] == "/"
