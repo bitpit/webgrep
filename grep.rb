@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 require 'open-uri'
-require 'webgrep.rb'
+require 'crawler.rb'
 
 
 class Grep

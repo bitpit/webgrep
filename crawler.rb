@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 require 'open-uri'
 require 'rubygems'
 require 'nokogiri'
