@@ -16,3 +16,4 @@ bin-release/
 *.txt
 testy.rb
 debug_class.rb
+dbg/

@@ -1,19 +1,21 @@
 #!/usr/bin/env ruby
 require 'open-uri'
-require 'child-grep.rb'
+require 'webgrep.rb'
 
 
 class Grep
     attr_accessor :target, :matched, :visited
         
-    def init_t
+    def init_t #for initializing from the command line
+        #assumes that URL begins with http/https, search is string
+        #and depth is int
         @target = Regexp.new ARGV[0]
         @base_url = ARGV[1]
         @depth = ARGV[2].to_i
     end
     
     
-    def init(targ,url,depth)
+    def init(targ,url,depth) #for initializing otherwise
         @target = Regexp.new targ
         @base_url = url
         @depth = depth.to_i
@@ -22,12 +24,12 @@ class Grep
     
     
     def run
-        top_page = Childgrep.new(@target,@base_url,@depth,[]) #make top page, tell it its top
+        top_page = Webgrep.new(@target,@base_url,@depth,[]) #make top page, tell it its top
         top_page.is_top=(true)
         results = top_page.run #recursively looks through pages; returns [matched, visited] sites
         @matched, @visited = results
-        results = results[0]#.compact.uniq #.compact.uniq shouldn't be needed but can't hurt
-        results = results.delete_if {|x| x.length < 3}
+        results = results[0]
+        #results = results.delete_if {|x| x.length < 3}
         print_results(results)
     end
     
@@ -49,7 +51,7 @@ class Grep
     
 end
 
-if ARGV.size == 3
+if ARGV.size == 3 #for running from command line
     g = Grep.new
     g.init_t
     g.run()
