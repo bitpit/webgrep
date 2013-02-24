@@ -60,7 +60,7 @@ class Webgrep
         
         to_visit.each_index {|i|
             if @is_top 
-                puts "searching "+i+" of "+to_visit.length.to_s+" subpages" 
+                puts "searching "+(i+1).inspect+" of "+to_visit.length.to_s+" subpages" 
             end
             
             child = Webgrep.new(@regex_target,to_visit[i],@depth-1,@visited)

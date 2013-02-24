@@ -31,6 +31,7 @@ class Grep
         results = results[0]
         #results = results.delete_if {|x| x.length < 3}
         print_results(results)
+        write_results?(results)
     end
     
     
@@ -47,7 +48,41 @@ class Grep
     end
     
     
-    
+    def write_results?(results)
+        
+        str = 0
+        
+        while true
+            begin
+                print "Write to file (Y/N)? "
+                system("stty raw -echo")
+                str = STDIN.getc
+                STDOUT.flush
+                ensure
+                system("stty -raw echo")
+            end
+            if str == 121
+                fn = ""
+                puts
+                while fn.length < 1
+                    print "Please enter file name (no overwrite checking): "
+                    fn = STDIN.gets
+                end
+                begin
+                    file = File.open(fn.chomp,'w')
+                    results.each {|i| file.puts i}
+                    file.close
+                rescue Exception
+                    puts "There was an error in saving your file. Sorry!"
+                end
+                return
+            elsif str == 110
+                puts
+                return
+            end
+            puts
+        end
+    end
     
 end
 
